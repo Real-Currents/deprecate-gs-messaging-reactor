@@ -23,56 +23,97 @@ import static reactor.bus.selector.Selectors.$;
 public class QuotePublishController {
     
     private ListenableFuture<Quotation> fQuotation;
-    
+    private QuotePublishListener listener;
+
     @Autowired
     private EventBus eventBus;
-    
+
     @Autowired
     private QuotePublisher publisher;
-    
+
     @Autowired
-    private QuotePublishListener listener;
-    
-    @Bean
-    public QuotePublishListener createEventBus(QuotePublishListener listener) {
-        return new QuotePublishListener(this);
-    }
-    @Autowired
-    CountDownLatch latch;
+    private QuoteService quoteService;
+
+//    @Autowired
+//    CountDownLatch latch;
+
+//    @Autowired
+//    private QuotePublishListener listener;
+
+//    @Bean
+//    public QuotePublishListener createPublishListener (QuotePublishListener listener) {
+//        return new QuotePublishListener(this);
+//    }
+
+//    @Bean
+//    public QuotePublishListener createPublishListener(QuotePublishListener listener) {
+//        return new QuotePublishListener();
+//    }
+
+//    @RequestMapping(value="")
+//    public DeferredResult<Quotation> getDefaultUser () {
+//        //listener = new QuotePublishListener(this);
+//        DeferredResult<Quotation> result = new DeferredResult<Quotation>();
+//        long startTime = System.currentTimeMillis();
+//
+//        try {
+//            eventBus.on($("restQuote"), listener);
+//
+//            publisher.publishQuotes(1);
+//
+//        } catch (InterruptedException e) {
+//            System.err.println(e.getMessage());
+//        }
+//
+//        System.err.println(fQuotation);
+//
+//        fQuotation.addCallback(new ListenableFutureCallback<Quotation>() {
+//
+//            @Override
+//            public void onSuccess(Quotation quotation) {
+//                System.err.println("Finished publishing quote.");
+//                result.setResult(quotation);
+//            }
+//
+//            @Override
+//            public void onFailure(Throwable throwable) {
+//                result.setErrorResult(throwable.getMessage());
+//            }
+//        });
+//
+//        return result;
+//    }
 
     @RequestMapping(value="")
     public DeferredResult<Quotation> getDefaultUser () {
         DeferredResult<Quotation> result = new DeferredResult<Quotation>();
+        ListenableFuture<Quotation> user;
         long startTime = System.currentTimeMillis();
 
+        System.err.println( "Processing request to find default user (Real-Currents) on GitHub");
+
         try {
-            eventBus.on($("restQuote"), listener);
-            
-            publisher.publishQuotes(1);
-            
+            user = quoteService.getQuotation();
+            user.addCallback(new ListenableFutureCallback<Quotation>() {
+
+                @Override
+                public void onSuccess(Quotation quotation) {
+                    result.setResult(quotation);
+                }
+
+                @Override
+                public void onFailure(Throwable throwable) {
+                    result.setErrorResult(throwable.getMessage());
+                }
+            });
         } catch (InterruptedException e) {
             System.err.println(e.getMessage());
         }
-        
-        System.err.println(fQuotation);
-    
-        fQuotation.addCallback(new ListenableFutureCallback<Quotation>() {
-        
-            @Override
-            public void onSuccess(Quotation quotation) {
-                System.err.println("Finished publishing quote.");
-                result.setResult(quotation);
-            }
-        
-            @Override
-            public void onFailure(Throwable throwable) {
-                result.setErrorResult(throwable.getMessage());
-            }
-        });
+
 
         return result;
     }
-    
+
     public ListenableFuture<Quotation> getFutureQuotation () {
         return this.fQuotation;
     }

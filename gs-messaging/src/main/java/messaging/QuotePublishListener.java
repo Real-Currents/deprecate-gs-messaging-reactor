@@ -11,11 +11,17 @@ import reactor.fn.Consumer;
 public class QuotePublishListener implements Consumer<Event<Quotation>> {
     private ListenableFuture<Quotation> aQuotation;
     private Quotation quotation;
+
+    public QuotePublishListener () {
+        super();
+    }
     
     public QuotePublishListener (QuotePublishController controller) {
+        super();
+
         aQuotation = controller.getFutureQuotation();
         System.err.println("QuotePublishListener initialized with "+ controller.getFutureQuotation().toString());
-        
+
         aQuotation = new AsyncResult<Quotation>(this.quotation);
         controller.setFutureQuotation(aQuotation);
         System.err.println("QuotePublishListener set AsyncResult on "+ controller.getFutureQuotation().toString());
