@@ -3,20 +3,13 @@ package messaging;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.AsyncConfigurerSupport;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import reactor.Environment;
 import reactor.bus.EventBus;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import static reactor.bus.selector.Selectors.$;
@@ -25,13 +18,18 @@ import static reactor.bus.selector.Selectors.$;
  * Created by revlin on 2/25/17.
  */
 @SpringBootApplication
-@EnableAsync
-public class SpringApp extends AsyncConfigurerSupport { //implements CommandLineRunner {
+//@Configuration
+//@EnableAutoConfiguration
+//@ComponentScan
+public class SpringApp implements CommandLineRunner {
 
     private static final int DEFAULT_NUMBER_OF_QUOTES = 10;
 
     @Autowired
     private EventBus eventBus;
+
+    @Autowired
+    private QuotePublisher publisher;
 
     @Autowired
     private QuoteReceiver receiver;
@@ -53,17 +51,9 @@ public class SpringApp extends AsyncConfigurerSupport { //implements CommandLine
     }
 
     @Override
-    public Executor getAsyncExecutor () {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-
+    public void run (String... args) throws InterruptedException {
         eventBus.on($("quotes"), receiver);
-
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("GithubLookup-");
-        executor.initialize();
-        return executor;
+        publisher.publishQuotes(DEFAULT_NUMBER_OF_QUOTES);
     }
 
     public static void main(String[] args) throws InterruptedException {

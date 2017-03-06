@@ -1,4 +1,4 @@
-package hello;
+package messaging;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
