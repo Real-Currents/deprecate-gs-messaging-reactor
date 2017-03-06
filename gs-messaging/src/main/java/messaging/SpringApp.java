@@ -6,10 +6,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.AsyncConfigurerSupport;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import reactor.Environment;
 import reactor.bus.EventBus;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import static reactor.bus.selector.Selectors.$;
@@ -21,7 +24,7 @@ import static reactor.bus.selector.Selectors.$;
 //@Configuration
 //@EnableAutoConfiguration
 //@ComponentScan
-public class SpringApp implements CommandLineRunner {
+public class SpringApp extends AsyncConfigurerSupport implements CommandLineRunner {
 
     private static final int DEFAULT_NUMBER_OF_QUOTES = 10;
 
@@ -48,6 +51,17 @@ public class SpringApp implements CommandLineRunner {
     @Bean
     public EventBus createEventBus(Environment env) {
         return EventBus.create(env, Environment.THREAD_POOL);
+    }
+
+    @Override
+    public Executor getAsyncExecutor () {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(2);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("QuoteService-");
+        executor.initialize();
+        return executor;
     }
 
     @Override

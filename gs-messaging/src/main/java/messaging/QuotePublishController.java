@@ -6,11 +6,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import reactor.bus.EventBus;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static reactor.bus.selector.Selectors.$;
 
@@ -21,7 +23,8 @@ import static reactor.bus.selector.Selectors.$;
 @RestController
 @RequestMapping("/")
 public class QuotePublishController {
-    
+
+    private AtomicInteger id = new AtomicInteger(0);
     private ListenableFuture<Quotation> fQuotation;
     private QuotePublishListener listener;
 
@@ -84,17 +87,16 @@ public class QuotePublishController {
 //        return result;
 //    }
 
-    @RequestMapping(value="")
-    public DeferredResult<Quotation> getDefaultUser () {
+    @RequestMapping(value="", method= RequestMethod.GET)
+    public DeferredResult<Quotation> restQuote () {
         DeferredResult<Quotation> result = new DeferredResult<Quotation>();
-        ListenableFuture<Quotation> user;
         long startTime = System.currentTimeMillis();
 
-        System.err.println( "Processing request to find default user (Real-Currents) on GitHub");
+        System.err.println( id.getAndIncrement() +": "+ fQuotation);
 
         try {
-            user = quoteService.getQuotation();
-            user.addCallback(new ListenableFutureCallback<Quotation>() {
+            fQuotation = quoteService.getQuotation();
+            fQuotation.addCallback(new ListenableFutureCallback<Quotation>() {
 
                 @Override
                 public void onSuccess(Quotation quotation) {
