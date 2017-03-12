@@ -16,15 +16,14 @@ public class QuotePublishListener implements Consumer<Event<Quotation>> {
         super();
     }
     
-    public QuotePublishListener (QuotePublishController controller) {
+    public QuotePublishListener (ListenableFuture<Quotation> fQuotation) {
         super();
 
-        aQuotation = controller.getFutureQuotation();
-        System.err.println("QuotePublishListener initialized with "+ controller.getFutureQuotation().toString());
+        aQuotation = fQuotation;
+        System.err.println("QuotePublishListener initialized with "+ fQuotation);
 
         aQuotation = new AsyncResult<Quotation>(this.quotation);
-        controller.setFutureQuotation(aQuotation);
-        System.err.println("QuotePublishListener set AsyncResult on "+ controller.getFutureQuotation().toString());
+        System.err.println("QuotePublishListener set AsyncResult on "+ fQuotation);
     }
     
     @Override

@@ -24,10 +24,6 @@ import static reactor.bus.selector.Selectors.$;
 @RequestMapping("/")
 public class QuotePublishController {
 
-    private AtomicInteger id = new AtomicInteger(0);
-    private ListenableFuture<Quotation> fQuotation;
-    private QuotePublishListener listener;
-
     @Autowired
     private EventBus eventBus;
 
@@ -89,6 +85,9 @@ public class QuotePublishController {
 
     @RequestMapping(value="", method= RequestMethod.GET)
     public DeferredResult<Quotation> restQuote () {
+        AtomicInteger id = new AtomicInteger(0);
+        ListenableFuture<Quotation> fQuotation = null;
+        QuotePublishListener listener;
         DeferredResult<Quotation> result = new DeferredResult<Quotation>();
         long startTime = System.currentTimeMillis();
 
@@ -114,13 +113,5 @@ public class QuotePublishController {
 
 
         return result;
-    }
-
-    public ListenableFuture<Quotation> getFutureQuotation () {
-        return this.fQuotation;
-    }
-    
-    public void setFutureQuotation (ListenableFuture<Quotation> fq) {
-        this.fQuotation = fq;
     }
 }
