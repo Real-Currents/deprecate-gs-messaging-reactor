@@ -27,17 +27,17 @@ public class QuotePublishController {
     @Autowired
     private EventBus eventBus;
 
-    @Autowired
-    private QuotePublisher publisher;
-
-    @Autowired
-    private QuoteService quoteService;
-
 //    @Autowired
 //    CountDownLatch latch;
 
 //    @Autowired
 //    private QuotePublishListener listener;
+
+    @Autowired
+    private QuotePublisher publisher;
+
+    @Autowired
+    private QuoteService quoteService;
 
 //    @Bean
 //    public QuotePublishListener createPublishListener (QuotePublishListener listener) {
@@ -47,40 +47,6 @@ public class QuotePublishController {
 //    @Bean
 //    public QuotePublishListener createPublishListener(QuotePublishListener listener) {
 //        return new QuotePublishListener();
-//    }
-
-//    @RequestMapping(value="")
-//    public DeferredResult<Quotation> getDefaultUser () {
-//        //listener = new QuotePublishListener(this);
-//        DeferredResult<Quotation> result = new DeferredResult<Quotation>();
-//        long startTime = System.currentTimeMillis();
-//
-//        try {
-//            eventBus.on($("restQuote"), listener);
-//
-//            publisher.publishQuotes(1);
-//
-//        } catch (InterruptedException e) {
-//            System.err.println(e.getMessage());
-//        }
-//
-//        System.err.println(fQuotation);
-//
-//        fQuotation.addCallback(new ListenableFutureCallback<Quotation>() {
-//
-//            @Override
-//            public void onSuccess(Quotation quotation) {
-//                System.err.println("Finished publishing quote.");
-//                result.setResult(quotation);
-//            }
-//
-//            @Override
-//            public void onFailure(Throwable throwable) {
-//                result.setErrorResult(throwable.getMessage());
-//            }
-//        });
-//
-//        return result;
 //    }
 
     @RequestMapping(value="", method= RequestMethod.GET)
