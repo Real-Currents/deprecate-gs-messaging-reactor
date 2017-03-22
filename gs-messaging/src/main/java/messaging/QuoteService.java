@@ -4,6 +4,7 @@ package messaging;
  * Created by revlin on 3/6/17.
  */
 
+import io.vertx.core.eventbus.EventBus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,9 @@ import org.springframework.web.client.RestTemplate;
 public class QuoteService <T> {
 
     @Autowired
+    private EventBus eventBus;
+
+    @Autowired
     private final RestTemplate template;
 
     @Bean
@@ -32,11 +36,16 @@ public class QuoteService <T> {
     }
 
     @Async
-    public ListenableFuture<Quotation> getQuotation () throws InterruptedException {
-        System.err.println( "Getting a Spring Quote" );
+    public ListenableFuture<Quotation> getQuotation (int id) throws InterruptedException {
+        System.err.println( "Getting a Spring Quote "+ id );
+
         String url = String.format("http://gturnquist-quoters.cfapps.io/api/random");
+
         Quotation quotation = template.getForObject(url, Quotation.class);
-        Thread.sleep(1000);
+
+        eventBus.publish("quote.retriever"+ id, id +") "+ quotation.getValue().getQuote());
+
+        Thread.sleep(3000);
         return new AsyncResult<Quotation>(quotation);
     }
 

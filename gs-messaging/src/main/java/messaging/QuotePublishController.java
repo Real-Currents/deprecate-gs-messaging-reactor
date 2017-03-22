@@ -1,20 +1,25 @@
 package messaging;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.MessageConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
-import reactor.bus.EventBus;
 
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static reactor.bus.selector.Selectors.$;
+//import static reactor.bus.selector.Selectors.$;
+//import reactor.bus.EventBus;
+import io.vertx.core.eventbus.EventBus;
 
 /**
  * Created by revlin on 2/25/17.
@@ -49,18 +54,32 @@ public class QuotePublishController {
 //        return new QuotePublishListener();
 //    }
 
-    @RequestMapping(value="", method= RequestMethod.GET)
-    public DeferredResult<Quotation> restQuote () {
-        AtomicInteger id = new AtomicInteger(0);
+    private AtomicInteger id = new AtomicInteger(0);
+
+    @RequestMapping(value={"", "/", "/{quoteId}"}, method= RequestMethod.GET)
+    public DeferredResult<Quotation> restQuote (@PathVariable Optional<String> quoteId) {
+        int id = (quoteId.toString() != "Optional.empty")? Integer.valueOf(quoteId.get()) : this.id.incrementAndGet();
         ListenableFuture<Quotation> fQuotation = null;
         QuotePublishListener listener;
         DeferredResult<Quotation> result = new DeferredResult<Quotation>();
+        MessageConsumer<String> quoteRetrievalListener = eventBus.consumer("quote.retriever"+ id);
         long startTime = System.currentTimeMillis();
 
-        System.err.println( id.getAndIncrement() +": "+ fQuotation);
+        System.err.println( id +": "+ fQuotation);
+
+        quoteRetrievalListener.handler(message -> {
+            quoteRetrievalListener.unregister(res -> {
+                if (res.succeeded()) {
+                    System.out.println("Quote retrieval complete.");
+                } else {
+                    System.out.println("Un-registration failed!");
+                }
+            });
+            System.out.println( "Quote received: "+ message.body());
+        });
 
         try {
-            fQuotation = quoteService.getQuotation();
+            fQuotation = quoteService.getQuotation(id);
             fQuotation.addCallback(new ListenableFutureCallback<Quotation>() {
 
                 @Override

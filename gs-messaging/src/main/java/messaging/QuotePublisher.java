@@ -14,24 +14,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class QuotePublisher {
 
-    @Autowired
-    EventBus eventBus;
-
-    @Autowired
-    CountDownLatch latch;
-
-    public void publishQuotes (int quotes) throws InterruptedException {
-        long startTime = System.currentTimeMillis();
-
-        AtomicInteger counter = new AtomicInteger(1);
-        
-        System.err.println("Number of quotes to publish: "+ quotes);
-
-        for (int i=0; i<quotes; i++) eventBus.notify("quotes", Event.wrap(counter.getAndIncrement()));
-
-        latch.await();
-
-        System.err.println("Elapsed time: "+ (System.currentTimeMillis() - startTime) +"ms");
-        System.err.println("Average time: "+ (System.currentTimeMillis() - startTime)/quotes +"ms");
-    }
+//    @Autowired
+//    EventBus eventBus;
+//
+//    @Autowired
+//    CountDownLatch latch;
+//
+//    public void publishQuotes (int quotes) throws InterruptedException {
+//        long startTime = System.currentTimeMillis();
+//
+//        AtomicInteger counter = new AtomicInteger(1);
+//
+//        System.err.println("Number of quotes to publish: "+ quotes);
+//
+//        for (int i=0; i<quotes; i++) eventBus.notify("quotes", Event.wrap(counter.getAndIncrement()));
+//
+//        latch.await();
+//
+//        System.err.println("Elapsed time: "+ (System.currentTimeMillis() - startTime) +"ms");
+//        System.err.println("Average time: "+ (System.currentTimeMillis() - startTime)/quotes +"ms");
+//    }
 }
