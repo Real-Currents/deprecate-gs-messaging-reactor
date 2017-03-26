@@ -4,13 +4,12 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.Optional;
@@ -57,7 +56,7 @@ public class QuotePublishController {
     private AtomicInteger id = new AtomicInteger(0);
 
     @RequestMapping(value={"", "/", "/{quoteId}"}, method= RequestMethod.GET)
-    public DeferredResult<Quotation> restQuote (@PathVariable Optional<String> quoteId) {
+    public @ResponseBody ResponseEntity<DeferredResult<Quotation>> restQuote (@PathVariable Optional<String> quoteId) {
         int id = (quoteId.toString() != "Optional.empty")? Integer.valueOf(quoteId.get()) : this.id.incrementAndGet();
         ListenableFuture<Quotation> fQuotation = null;
         QuotePublishListener listener;
@@ -97,6 +96,6 @@ public class QuotePublishController {
         }
 
 
-        return result;
+        return new ResponseEntity<DeferredResult<Quotation>>(result, HttpStatus.OK);
     }
 }

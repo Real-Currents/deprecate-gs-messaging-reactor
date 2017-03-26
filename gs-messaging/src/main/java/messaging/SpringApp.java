@@ -26,7 +26,7 @@ import io.vertx.core.eventbus.EventBus;
 //@Configuration
 //@EnableAutoConfiguration
 //@ComponentScan
-public class SpringApp extends AsyncConfigurerSupport implements CommandLineRunner {
+public class SpringApp extends AsyncConfigurerSupport {
 
     private static final int DEFAULT_NUMBER_OF_QUOTES = 10;
 
@@ -69,7 +69,6 @@ public class SpringApp extends AsyncConfigurerSupport implements CommandLineRunn
         return executor;
     }
 
-    @Override
     public void run (String... args) throws InterruptedException {
         //eventBus.on($("quotes"), receiver);
         //publisher.publishQuotes(DEFAULT_NUMBER_OF_QUOTES);
