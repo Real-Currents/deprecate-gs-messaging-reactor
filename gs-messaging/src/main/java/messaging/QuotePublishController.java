@@ -1,5 +1,6 @@
 package messaging;
 
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,17 @@ public class QuotePublishController {
 
     private AtomicInteger id = new AtomicInteger(0);
 
+
+    @PostConstruct
+    public void startVeritcle () {
+        DeploymentOptions options = new DeploymentOptions().setWorker(true);
+
+        vertx.deployVerticle("messaging.QuoteVerticle", options, evt -> {
+            System.err.println("Verticle Deployed");
+            System.err.println(evt.result());
+        });
+    }
+
     @RequestMapping(value={"", "/", "/{quoteId}"}, method= RequestMethod.GET)
     public @ResponseBody ResponseEntity<DeferredResult<Quotation>> restQuote (@PathVariable Optional<String> quoteId) {
 
@@ -54,6 +66,8 @@ public class QuotePublishController {
         DeferredResult<Quotation> result = new DeferredResult<Quotation>();
 
         MessageConsumer<String> quoteRetrievalListener = eventBus.consumer("quote.retriever"+ id);
+
+        eventBus.publish("quote.request"+ id, id +"");
 
         long startTime = System.currentTimeMillis();
 
