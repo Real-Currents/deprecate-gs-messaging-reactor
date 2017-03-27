@@ -43,7 +43,7 @@ public class QuoteService <T> {
 
         Quotation quotation = template.getForObject(url, Quotation.class);
 
-        eventBus.publish("quote.retriever"+ id, id +") "+ quotation.getValue().getQuote());
+        //eventBus.publish("quote.retriever"+ id, id +") "+ quotation.getValue().getQuote());
 
         Thread.sleep(3000);
         return new AsyncResult<Quotation>(quotation);

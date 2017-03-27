@@ -1,6 +1,7 @@
 package messaging;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.vertx.core.json.JsonArray;
 
 /**
  * Created by revlin on 2/25/17.
@@ -10,6 +11,16 @@ public class Quote {
 
     Long id;
     String quote;
+
+    public Quote () { super(); }
+
+    public Quote (JsonArray springQuote) {
+        /* Convert results array [id, quote]
+         * into a quote object.
+         */
+        this.id = (long) springQuote.getInteger(0);
+        this.quote = (String) springQuote.getString(1);
+    }
 
     public Long getId() {
         return id;

@@ -3,9 +3,11 @@ package messaging;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.asyncsql.AsyncSQLClient;
 import io.vertx.ext.asyncsql.PostgreSQLClient;
+import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,12 +42,34 @@ public class QuoteVerticle extends AbstractVerticle {
         quoteRequestListener.handler(message -> {
             System.out.println( "Quote requested: "+ message.body());
 
-            postgresClient.getConnection(res -> {
-                if (res.succeeded()) {
+            int requestId = new JsonObject(message.body()).getInteger("id");
+            int quoteId = (requestId % 12) + 1;
+
+            postgresClient.getConnection(connectionRes -> {
+                if (connectionRes.succeeded()) {
                     System.err.println("Connected to quote db.");
-                    SQLConnection postgresConnection = res.result();
+                    System.err.println( "Getting Spring Quote "+ quoteId );
+
+                    SQLConnection postgresConnection = connectionRes.result();
+                    JsonArray params = new JsonArray().add(quoteId);
+
+                    postgresConnection.queryWithParams(
+                            "SELECT * FROM quotations WHERE id=?",
+                            params,
+                            queryRes -> {
+                                if (queryRes.succeeded()) {
+                                    ResultSet results = queryRes.result();
+                                    Quote springQuote = new Quote(results.getResults().get(0));
+                                    System.err.println(springQuote.getQuote());
+                                    eventBus.publish("quote.retriever"+ requestId, requestId +"\n"+ springQuote.getQuote());
+                                } else {
+                                    System.err.println("Failed to query db: "+ queryRes.cause());
+                                }
+                            }
+                        );
+
                 } else {
-                    System.err.println("Failed to connect to db: "+ res.cause());
+                    System.err.println("Failed to connect to db: "+ connectionRes.cause());
                 }
             });
         });

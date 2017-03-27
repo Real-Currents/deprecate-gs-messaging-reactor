@@ -49,7 +49,7 @@ public class QuotePublishController {
         /* Create a process id for this request, simply by
          * adding system time in milliseconds to 'id' param
          */
-        int id = ((int) System.currentTimeMillis() << 1) +
+        int id = Math.abs((int) System.currentTimeMillis() << 1) +
                 ((quoteId.toString() != "Optional.empty")? Integer.valueOf(quoteId.get()) : this.id.get());
         if (this.id.get() <= id) { this.id.set(id); this.id.incrementAndGet(); }
 
