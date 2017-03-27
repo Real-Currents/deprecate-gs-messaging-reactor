@@ -22,7 +22,7 @@ public class QuoteVerticle extends AbstractVerticle {
         System.err.println("Verticle Deployed");
 
         quoteRequestListener.handler(message -> {
-            System.out.println( "Quote requested "+ message.body());
+            System.out.println( "Quote requested: "+ message.body());
         });
 
     }

@@ -3,6 +3,7 @@ package messaging;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.json.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
@@ -45,19 +46,20 @@ public class QuotePublishController {
     @RequestMapping(value={"", "/", "/{quoteId}"}, method= RequestMethod.GET)
     public @ResponseBody ResponseEntity<DeferredResult<Quotation>> restQuote (@PathVariable Optional<String> quoteId) {
 
-        int id = (quoteId.toString() != "Optional.empty")? Integer.valueOf(quoteId.get()) : this.id.incrementAndGet();
+        /* Create a process id for this request, simply by
+         * adding system time in milliseconds to 'id' param
+         */
+        int id = ((int) System.currentTimeMillis() << 1) +
+                ((quoteId.toString() != "Optional.empty")? Integer.valueOf(quoteId.get()) : this.id.get());
+        if (this.id.get() <= id) { this.id.set(id); this.id.incrementAndGet(); }
 
-        ListenableFuture<Quotation> fQuotation = null;
-        QuotePublishListener listener;
-        DeferredResult<Quotation> result = new DeferredResult<Quotation>();
-
+        JsonObject jsonQuote = new JsonObject("{ \"id\": "+ id +", \"method\": \"getSpringQuote\" }");
         MessageConsumer<String> quoteRetrievalListener = eventBus.consumer("quote.retriever"+ id);
 
-        eventBus.publish("quote.request", id +"");
+        DeferredResult<Quotation> result = new DeferredResult<Quotation>();
+        ListenableFuture<Quotation> fQuotation = null;
 
-        long startTime = System.currentTimeMillis();
-
-        //System.err.println( id +": "+ fQuotation);
+        eventBus.publish("quote.request", jsonQuote.encode());
 
         quoteRetrievalListener.handler(message -> {
             quoteRetrievalListener.unregister(res -> {
