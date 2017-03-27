@@ -40,21 +40,7 @@ public class QuotePublishController {
     @Autowired
     private QuoteService quoteService;
 
-    @Autowired
-    private QuoteVerticle quoteVerticle;
-
     private AtomicInteger id = new AtomicInteger(0);
-
-
-    @PostConstruct
-    public void startVeritcle () {
-        DeploymentOptions options = new DeploymentOptions().setWorker(true);
-
-        vertx.deployVerticle("messaging.QuoteVerticle", options, evt -> {
-            System.err.println("Verticle Deployed");
-            System.err.println(evt.result());
-        });
-    }
 
     @RequestMapping(value={"", "/", "/{quoteId}"}, method= RequestMethod.GET)
     public @ResponseBody ResponseEntity<DeferredResult<Quotation>> restQuote (@PathVariable Optional<String> quoteId) {
@@ -67,7 +53,7 @@ public class QuotePublishController {
 
         MessageConsumer<String> quoteRetrievalListener = eventBus.consumer("quote.retriever"+ id);
 
-        eventBus.publish("quote.request"+ id, id +"");
+        eventBus.publish("quote.request", id +"");
 
         long startTime = System.currentTimeMillis();
 

@@ -36,10 +36,21 @@ public class SpringApp {
     @Bean
     public EventBus createEventBus () { return vertx.eventBus(); }
 
+    @Autowired
+    private QuoteVerticle quoteVerticle;
+
+    @PostConstruct
+    public void startVeritcle () {
+        DeploymentOptions options = new DeploymentOptions().setWorker(true);
+
+        vertx.deployVerticle(quoteVerticle, options, evt -> {
+            System.err.println(evt.result());
+        });
+    }
+
     @PreDestroy
     public void stopVerticle () {
-        vertx.undeploy("messaging.QuoteVerticle", evt -> {
-            System.err.println("Verticle Undeployed");
+        vertx.undeploy(quoteVerticle.getClass().toString(), evt -> {
             System.err.println(evt.result()); });
     }
 

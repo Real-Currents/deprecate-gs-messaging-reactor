@@ -19,14 +19,9 @@ public class QuoteVerticle extends AbstractVerticle {
     public void start () {
         MessageConsumer<String> quoteRequestListener = eventBus.consumer("quote.request");
 
+        System.err.println("Verticle Deployed");
+
         quoteRequestListener.handler(message -> {
-            quoteRequestListener.unregister(res -> {
-                if (res.succeeded()) {
-                    System.out.println("Quote requests finished.");
-                } else {
-                    System.out.println("Un-registration failed!");
-                }
-            });
             System.out.println( "Quote requested "+ message.body());
         });
 
@@ -34,6 +29,6 @@ public class QuoteVerticle extends AbstractVerticle {
 
     // Synchronous verticle stop routine
     public void stop () {
-
+        System.err.println("Verticle Undeployed");
     }
 }
