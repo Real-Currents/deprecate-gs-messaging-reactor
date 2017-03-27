@@ -1,5 +1,6 @@
 package messaging;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -19,6 +20,9 @@ import java.util.concurrent.TimeUnit;
 //import reactor.bus.EventBus;
 import io.vertx.core.eventbus.EventBus;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 /**
  * Created by revlin on 2/25/17.
  */
@@ -26,61 +30,34 @@ import io.vertx.core.eventbus.EventBus;
 //@Configuration
 //@EnableAutoConfiguration
 //@ComponentScan
-public class SpringApp extends AsyncConfigurerSupport {
+public class SpringApp {
 
     private static final int DEFAULT_NUMBER_OF_QUOTES = 10;
 
     @Autowired
+    private Vertx vertx;
+
+    @Bean
+    public Vertx getVertx () { return Vertx.vertx(); }
+
+    @Autowired
     private EventBus eventBus;
 
-//    @Autowired
-//    private QuotePublisher publisher;
-
-//    @Autowired
-//    private QuoteReceiver receiver;
-
     @Bean
-    public CountDownLatch createLatch () {
-        return new CountDownLatch(DEFAULT_NUMBER_OF_QUOTES);
+    public EventBus createEventBus () { return vertx.eventBus(); }
+
+    @PostConstruct
+    public void startVeritcle () {
+        vertx.deployVerticle("messaging.QuoteVerticle", evt -> { System.err.println(evt.result()); });
     }
 
-//    @Bean
-//    public Environment getEnvironment () {
-//        return Environment.initializeIfEmpty()
-//            .assignErrorJournal();
-//    }
-
-//    @Bean
-//    public EventBus createEventBus (Environment env) {
-//        return EventBus.create(env, Environment.THREAD_POOL);
-//    }
-
-    @Bean
-    public EventBus createEventBus () { return Vertx.vertx().eventBus(); }
-
-    @Override
-    public Executor getAsyncExecutor () {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(2);
-        executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("QuoteService-");
-        executor.initialize();
-        return executor;
-    }
-
-    public void run (String... args) throws InterruptedException {
-        //eventBus.on($("quotes"), receiver);
-        //publisher.publishQuotes(DEFAULT_NUMBER_OF_QUOTES);
+    @PreDestroy
+    public void stopVerticle () {
+        vertx.undeploy("messaging.QuoteVerticle", evt -> { System.err.println(evt.result()); });
     }
 
     public static void main(String[] args) throws InterruptedException {
-
         ApplicationContext app = SpringApplication.run(SpringApp.class, args);
-
-        //app.getBean(CountDownLatch.class).await(1, TimeUnit.SECONDS);
-
-        //app.getBean(Environment.class).shutdown();
     }
 
 }

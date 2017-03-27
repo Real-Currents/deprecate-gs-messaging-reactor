@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 //import reactor.bus.EventBus;
 import io.vertx.core.eventbus.EventBus;
 
+import javax.annotation.PostConstruct;
+
 /**
  * Created by revlin on 2/25/17.
  */
@@ -29,42 +31,33 @@ import io.vertx.core.eventbus.EventBus;
 public class QuotePublishController {
 
     @Autowired
-    private EventBus eventBus;
-
-//    @Autowired
-//    CountDownLatch latch;
-
-//    @Autowired
-//    private QuotePublishListener listener;
+    private Vertx vertx;
 
     @Autowired
-    private QuotePublisher publisher;
+    private EventBus eventBus;
 
     @Autowired
     private QuoteService quoteService;
 
-//    @Bean
-//    public QuotePublishListener createPublishListener (QuotePublishListener listener) {
-//        return new QuotePublishListener(this);
-//    }
-
-//    @Bean
-//    public QuotePublishListener createPublishListener(QuotePublishListener listener) {
-//        return new QuotePublishListener();
-//    }
+    @Autowired
+    private QuoteVerticle quoteVerticle;
 
     private AtomicInteger id = new AtomicInteger(0);
 
     @RequestMapping(value={"", "/", "/{quoteId}"}, method= RequestMethod.GET)
     public @ResponseBody ResponseEntity<DeferredResult<Quotation>> restQuote (@PathVariable Optional<String> quoteId) {
+
         int id = (quoteId.toString() != "Optional.empty")? Integer.valueOf(quoteId.get()) : this.id.incrementAndGet();
+
         ListenableFuture<Quotation> fQuotation = null;
         QuotePublishListener listener;
         DeferredResult<Quotation> result = new DeferredResult<Quotation>();
+
         MessageConsumer<String> quoteRetrievalListener = eventBus.consumer("quote.retriever"+ id);
+
         long startTime = System.currentTimeMillis();
 
-        System.err.println( id +": "+ fQuotation);
+        //System.err.println( id +": "+ fQuotation);
 
         quoteRetrievalListener.handler(message -> {
             quoteRetrievalListener.unregister(res -> {

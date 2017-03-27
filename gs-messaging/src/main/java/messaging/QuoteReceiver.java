@@ -15,16 +15,16 @@ import java.util.concurrent.CountDownLatch;
 @Service
 public class QuoteReceiver implements Consumer<Event<Integer>> {
 
-    @Autowired
-    CountDownLatch latch;
+//    @Autowired
+//    CountDownLatch latch;
 
-    @Autowired
-    RestTemplate template;
+//    @Autowired
+//    RestTemplate template;
 
-    @Bean
-    public RestTemplate getTemplate () {
-        return new RestTemplate();
-    }
+//    @Bean
+//    public RestTemplate getTemplate () {
+//        return new RestTemplate();
+//    }
 
 //    /* When implementing a Consumer this Setter constructor
 //     * creates circular dependency... so leave it out
@@ -34,13 +34,13 @@ public class QuoteReceiver implements Consumer<Event<Integer>> {
 //    }
 
     public void accept (Event<Integer> evt) {
-        System.err.println("Get random quote...");
-        Quotation quotation = template.getForObject(
-            "http://gturnquist-quoters.cfapps.io/api/random",
-            Quotation.class
-        );
-        System.err.println("Quote "+ evt.getData() +": "+ quotation.getValue().getQuote());
-        latch.countDown();
+//        System.err.println("Get random quote...");
+//        Quotation quotation = template.getForObject(
+//            "http://gturnquist-quoters.cfapps.io/api/random",
+//            Quotation.class
+//        );
+//        System.err.println("Quote "+ evt.getData() +": "+ quotation.getValue().getQuote());
+//        latch.countDown();
     }
 
 }
