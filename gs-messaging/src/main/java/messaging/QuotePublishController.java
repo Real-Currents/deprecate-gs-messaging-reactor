@@ -1,5 +1,6 @@
 package messaging;
 
+import com.maponics.common.jsonrpc.core.JsonRpc20Request;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
@@ -54,6 +55,7 @@ public class QuotePublishController {
         if (this.id.get() <= id) { this.id.set(id); this.id.incrementAndGet(); }
 
         JsonObject jsonQuote = new JsonObject("{ \"id\": "+ id +", \"method\": \"getSpringQuote\" }");
+        JsonRpc20Request quoteRequest;
         MessageConsumer<String> quoteRetrievalListener = eventBus.consumer("quote.retriever"+ id);
 
         DeferredResult<Quotation> result = new DeferredResult<Quotation>();

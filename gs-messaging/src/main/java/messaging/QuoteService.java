@@ -15,13 +15,11 @@ import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Created by revlin on 2/25/17.
+ * This is a traditional Spring Boot service. The primary method returns an instance of
+ * ListenableFuture, "a Future implementation that adds non-blocking callback-based capabilities."
  */
 @Service
 public class QuoteService <T> {
-
-    @Autowired
-    private EventBus eventBus;
 
     @Autowired
     private final RestTemplate template;
@@ -42,8 +40,6 @@ public class QuoteService <T> {
         String url = String.format("http://gturnquist-quoters.cfapps.io/api/random");
 
         Quotation quotation = template.getForObject(url, Quotation.class);
-
-        //eventBus.publish("quote.retriever"+ id, id +") "+ quotation.getValue().getQuote());
 
         Thread.sleep(3000);
         return new AsyncResult<Quotation>(quotation);
