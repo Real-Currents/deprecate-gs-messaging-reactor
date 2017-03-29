@@ -22,6 +22,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
  * Created by JO088HA on 3/23/2017.
@@ -49,18 +56,34 @@ public class SpringAppTest {
     }
 
     @Test
-    public void testQuotePublicsherResponse () throws Exception {
-        assertThat(this.restTemplate.getForObject(
-                "http://localhost:"+ testPort +"/1", String.class)
-        ).contains("success");
-    }
-
-    @Test
     public void testQuotePublisherMockMVC() throws Exception {
         this.mockMvc
                 .perform(get("/1"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.value").exists());
+    }
+
+    @Test
+    public void testQuotePublisherResponse () throws Exception {
+        assertThat(this.restTemplate.getForObject(
+                "http://localhost:"+ testPort +"/", String.class)
+        ).contains("success");
+    }
+
+    @Test
+    public void testAsyncQuotePublisherResponses () throws Exception {
+        Stream<String> testRequests = Stream.generate(() -> "/").limit(100);
+        Flux<String> flux = Flux.just("/", "/", "/", "/", "/", "/", "/", "/", "/", "/", "/", "/");
+
+        flux
+//            .flatMap(value ->
+//                Mono.just(value).subscribeOn(Schedulers.parallel()), 2
+//            )
+            .subscribe(req -> {
+                assertThat(this.restTemplate.getForObject(
+                        "http://localhost:"+ testPort + req, String.class)
+                ).contains("success");
+            });
     }
 }

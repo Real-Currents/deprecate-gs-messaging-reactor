@@ -35,7 +35,6 @@ public class QuoteService <T> {
 
     @Async
     public ListenableFuture<Quotation> getQuotation (int id) throws InterruptedException {
-        System.err.println( "Getting a Spring Quote "+ id );
 
         String url = String.format("http://gturnquist-quoters.cfapps.io/api/random");
 
