@@ -44,11 +44,11 @@ public class QuoteVerticle extends AbstractVerticle {
 
         quoteRequestListener = eventBus.consumer("quote.request");
 
-        postgresClient.getConnection(connectionRes -> {
-            System.err.println("Connected to quote db.");
+        quoteRequestListener.handler(message -> {
+            System.out.println( "Quote requested: "+ message.body());
 
-            quoteRequestListener.handler(message -> {
-                System.out.println( "Quote requested: "+ message.body());
+            postgresClient.getConnection(connectionRes -> {
+                System.err.println("Connecting to quote db.");
 
                 int requestId = Integer.valueOf((String) new JsonObject(message.body()).getString("id"));
                 int quoteId = Integer.valueOf((String) new JsonObject(message.body()).getJsonObject("params").getString("quoteId"));
@@ -60,43 +60,49 @@ public class QuoteVerticle extends AbstractVerticle {
 
                     eventBus.publish("quote.retriever" + requestId, jsonError.toJson());
 
+                } else if (connectionRes.succeeded()) {
+                    System.err.println("Getting Spring Quote " + quoteId);
+
+                    SQLConnection postgresConnection = connectionRes.result();
+                    JsonArray params = new JsonArray().add(quoteId);
+
+                    //System.err.println("postgresConnection: "+ postgresConnection.toString());
+
+                    postgresConnection.queryWithParams(
+                        "SELECT * FROM quotations WHERE id=?",
+                        params,
+                        queryRes -> {
+                            postgresConnection.close();
+
+                            if (queryRes.succeeded()) {
+                                ResultSet results = queryRes.result();
+                                Quote springQuote = new Quote(results.getResults().get(0));
+                                JsonRpc20Reply jsonQuotation = JsonRpc20Reply.reply(requestId + "", JsonObject.mapFrom(springQuote).getMap());
+
+                                System.err.println(springQuote.getQuote());
+
+                                eventBus.publish("quote.retriever" + requestId, jsonQuotation.toJson());
+
+                            } else {
+                                JsonRpc20Reply jsonError = JsonRpc20Reply.invalidParams(requestId + "", queryRes.cause().toString());
+
+                                System.err.println("Failed to query db: " + queryRes.cause());
+
+                                eventBus.publish("quote.retriever" + requestId, jsonError.toJson());
+                            }
+                        }
+                    );
+
                 } else {
-                    postgresClient.close();
+                    System.err.println("Failed to connect to db: " + connectionRes.cause());
+                }
 
-                    if (connectionRes.succeeded()) {
-                        System.err.println("Getting Spring Quote " + quoteId);
+                postgresClient.close();
 
-                        SQLConnection postgresConnection = connectionRes.result();
-                        JsonArray params = new JsonArray().add(quoteId);
-
-                        postgresConnection.queryWithParams(
-                                "SELECT * FROM quotations WHERE id=?",
-                                params,
-                                queryRes -> {
-                                    postgresConnection.close();
-
-                                    if (queryRes.succeeded()) {
-                                        ResultSet results = queryRes.result();
-                                        Quote springQuote = new Quote(results.getResults().get(0));
-                                        JsonRpc20Reply jsonQuotation = JsonRpc20Reply.reply(requestId + "", JsonObject.mapFrom(springQuote).getMap());
-
-                                        System.err.println(springQuote.getQuote());
-
-                                        eventBus.publish("quote.retriever" + requestId, jsonQuotation.toJson());
-
-                                    } else {
-                                        JsonRpc20Reply jsonError = JsonRpc20Reply.invalidParams(requestId + "", queryRes.cause().toString());
-
-                                        System.err.println("Failed to query db: " + queryRes.cause());
-
-                                        eventBus.publish("quote.retriever" + requestId, jsonError.toJson());
-                                    }
-                                }
-                        );
-
-                    } else {
-                        System.err.println("Failed to connect to db: " + connectionRes.cause());
-                    }
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    System.err.println(e.getMessage());
                 }
             });
 

@@ -95,6 +95,12 @@ public class QuotePublishController {
             System.err.println(e.getMessage());
         }
 
+//        try {
+//            Thread.sleep(3000);
+//        } catch (InterruptedException e) {
+//            System.err.println(e.getMessage());
+//        }
+
         return new ResponseEntity<DeferredResult<Quotation>>(result, HttpStatus.OK);
     }
 }

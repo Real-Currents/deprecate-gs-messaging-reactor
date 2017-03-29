@@ -24,17 +24,20 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SynchronousSink;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 /**
  * Created by JO088HA on 3/23/2017.
  */
 @AutoConfigureMockMvc
-@ContextConfiguration(classes = { SpringApp.class })
+@ContextConfiguration(classes = {SpringApp.class})
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class SpringAppTest {
@@ -51,39 +54,72 @@ public class SpringAppTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    public void testControllerLoads () throws Exception {
+    public void testControllerLoads() throws Exception {
         assertThat(quotePublishController).isNotNull();
     }
 
-    @Test
-    public void testQuotePublisherMockMVC() throws Exception {
-        this.mockMvc
-                .perform(get("/1"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.value").exists());
-    }
+//    @Test
+//    public void testQuotePublisherMockMVC() throws Exception {
+//        this.mockMvc
+//            .perform(get("/1"))
+//            .andDo(print())
+//            .andExpect(status().isOk())
+//            .andExpect(jsonPath("$.result.value").exists());
+//    }
+
+//    @Test
+//    public void testQuotePublisherResponse () throws Exception {
+//        assertThat(this.restTemplate.getForObject(
+//                "http://localhost:"+ testPort +"/", String.class)
+//        ).contains("success");
+//    }
 
     @Test
-    public void testQuotePublisherResponse () throws Exception {
-        assertThat(this.restTemplate.getForObject(
-                "http://localhost:"+ testPort +"/", String.class)
-        ).contains("success");
-    }
+    public void testAsyncQuotePublisherResponses() throws Exception {
+        AtomicInteger reqCount = new AtomicInteger(0);
+        CountDownLatch latch = new CountDownLatch(100);
+        long startTime = System.currentTimeMillis();
 
-    @Test
-    public void testAsyncQuotePublisherResponses () throws Exception {
-        Stream<String> testRequests = Stream.generate(() -> "/").limit(100);
-        Flux<String> flux = Flux.just("/", "/", "/", "/", "/", "/", "/", "/", "/", "/", "/", "/");
+        //Stream<String> testRequests = Stream.generate(() -> "/").limit(100);
+        Flux<String> testRequests = Flux.generate(v -> v.next("/"));
+//        just(
+//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
+//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
+//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
+//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
+//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
+//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
+//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
+//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
+//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
+//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/"
+//        );
 
-        flux
-//            .flatMap(value ->
-//                Mono.just(value).subscribeOn(Schedulers.parallel()), 2
-//            )
-            .subscribe(req -> {
+        /* Asynchronouse requests made in background thread(s) */
+        testRequests
+            .log()
+            .flatMap(
+                value -> {
+                    return Mono.just(value).subscribeOn(Schedulers.parallel());
+                },
+                4
+            )
+            //.doOnNext()
+            .subscribe(v -> {
+                System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + v);
+
                 assertThat(this.restTemplate.getForObject(
-                        "http://localhost:"+ testPort + req, String.class)
+                    "http://localhost:" + testPort + v, String.class)
                 ).contains("success");
-            });
+
+                latch.countDown();
+            }, 100);
+
+        long stopAsyncTime = System.currentTimeMillis() - startTime;
+
+        /* Synchronous timeout made in main thread to keep test app alive */
+        latch.await();
+
+        System.err.println(reqCount.get() + " asynchronous requests completed after " + (int) (stopAsyncTime) + "ms");
     }
 }

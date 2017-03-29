@@ -40,7 +40,8 @@ public class QuoteService <T> {
 
         Quotation quotation = template.getForObject(url, Quotation.class);
 
-        Thread.sleep(3000);
+        //Thread.sleep(3000);
+
         return new AsyncResult<Quotation>(quotation);
     }
 
