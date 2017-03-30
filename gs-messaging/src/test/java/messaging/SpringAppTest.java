@@ -78,52 +78,38 @@ public class SpringAppTest {
     public void testAsyncQuotePublisherResponses() throws Exception {
         AtomicInteger reqCount = new AtomicInteger(0);
         CountDownLatch latch = new CountDownLatch(100);
+
         long startTime = System.currentTimeMillis();
 
         //Stream<String> testRequests = Stream.generate(() -> "/").limit(100);
         Flux<String> testRequests = Flux.generate(v -> v.next("/"));
-//        just(
-//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
-//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
-//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
-//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
-//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
-//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
-//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
-//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
-//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/",
-//            "/", "/", "/", "/", "/", "/", "/", "/", "/", "/"
-//        );
 
         /* Asynchronouse requests made in background thread(s) */
         testRequests
             .log()
-            .flatMap(
-                value -> {
-                    return Mono.just(value).subscribeOn(Schedulers.parallel());
-                },
-                4
-            )
-            //.doOnNext()
+            .doOnNext(v -> System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + v))
 //            .filter(v -> {
-//                System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + v);
 //                if (Integer.getInteger(v) < 101) return true; else return false;
 //            })
+            .flatMap(
+                v -> Mono.just(v).subscribeOn(Schedulers.parallel()),
+                4
+            )
             .subscribe(v -> {
-                //System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + v);
 
                 assertThat(this.restTemplate.getForObject(
                     "http://localhost:" + testPort + v, String.class)
                 ).contains("success");
 
                 latch.countDown();
+
             }, 100);
 
-        long stopAsyncTime = System.currentTimeMillis() - startTime;
+        long stopTime = System.currentTimeMillis() - startTime;
 
-        /* Synchronous timeout made in main thread to keep test app alive */
+        /* Synchronous await timeout in main thread to keep test app alive */
         latch.await();
 
-        System.err.println(reqCount.get() + " requests completed after " + (int) (stopAsyncTime) + "ms");
+        System.err.println(reqCount.get() + " requests completed after " + (int) (stopTime) + "ms");
     }
 }
