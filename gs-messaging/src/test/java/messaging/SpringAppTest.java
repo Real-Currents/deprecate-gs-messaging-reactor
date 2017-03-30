@@ -105,8 +105,12 @@ public class SpringAppTest {
                 4
             )
             //.doOnNext()
+//            .filter(v -> {
+//                System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + v);
+//                if (Integer.getInteger(v) < 101) return true; else return false;
+//            })
             .subscribe(v -> {
-                System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + v);
+                //System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + v);
 
                 assertThat(this.restTemplate.getForObject(
                     "http://localhost:" + testPort + v, String.class)
@@ -120,6 +124,6 @@ public class SpringAppTest {
         /* Synchronous timeout made in main thread to keep test app alive */
         latch.await();
 
-        System.err.println(reqCount.get() + " asynchronous requests completed after " + (int) (stopAsyncTime) + "ms");
+        System.err.println(reqCount.get() + " requests completed after " + (int) (stopAsyncTime) + "ms");
     }
 }
