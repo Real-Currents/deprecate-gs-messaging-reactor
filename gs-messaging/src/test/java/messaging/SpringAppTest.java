@@ -54,18 +54,20 @@ public class SpringAppTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @Test
     public void testControllerLoads() throws Exception {
         assertThat(quotePublishController).isNotNull();
     }
 
-//    @Test
-//    public void testQuotePublisherMockMVC() throws Exception {
-//        this.mockMvc
-//            .perform(get("/1"))
-//            .andDo(print())
-//            .andExpect(status().isOk())
-//            .andExpect(jsonPath("$.result.value").exists());
-//    }
+    @Test
+    public void testQuotePublisherMockMVC() throws Exception {
+        this.mockMvc
+            .perform(get("/1"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.value").exists());
+            //.andExpect(jsonPath("$.result.quote").exists());
+    }
 
 //    @Test
 //    public void testQuotePublisherResponse () throws Exception {
@@ -74,42 +76,42 @@ public class SpringAppTest {
 //        ).contains("success");
 //    }
 
-    @Test
-    public void testAsyncQuotePublisherResponses() throws Exception {
-        AtomicInteger reqCount = new AtomicInteger(0);
-        CountDownLatch latch = new CountDownLatch(100);
-
-        long startTime = System.currentTimeMillis();
-
-        //Stream<String> testRequests = Stream.generate(() -> "/").limit(100);
-        Flux<String> testRequests = Flux.generate(v -> v.next("/"));
-
-        /* Asynchronouse requests made in background thread(s) */
-        testRequests
-            .log()
-            .doOnNext(v -> System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + v))
-//            .filter(v -> {
-//                if (Integer.getInteger(v) < 101) return true; else return false;
-//            })
-            .flatMap(
-                v -> Mono.just(v).subscribeOn(Schedulers.parallel()),
-                4
-            )
-            .subscribe(v -> {
-
-                assertThat(this.restTemplate.getForObject(
-                    "http://localhost:" + testPort + v, String.class)
-                ).contains("success");
-
-                latch.countDown();
-
-            }, 100);
-
-        long stopTime = System.currentTimeMillis() - startTime;
-
-        /* Synchronous await timeout in main thread to keep test app alive */
-        latch.await();
-
-        System.err.println(reqCount.get() + " requests completed after " + (int) (stopTime) + "ms");
-    }
+//    @Test
+//    public void testAsyncQuotePublisherResponses() throws Exception {
+//        AtomicInteger reqCount = new AtomicInteger(0);
+//        CountDownLatch latch = new CountDownLatch(100);
+//
+//        long startTime = System.currentTimeMillis();
+//
+//        //Stream<String> testRequests = Stream.generate(() -> "/").limit(100);
+//        Flux<String> testRequests = Flux.generate(v -> v.next("/"));
+//
+//        /* Asynchronouse requests made in background thread(s) */
+//        testRequests
+//            .log()
+//            .doOnNext(v -> System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + v))
+////            .filter(v -> {
+////                if (Integer.getInteger(v) < 101) return true; else return false;
+////            })
+//            .flatMap(
+//                v -> Mono.just(v).subscribeOn(Schedulers.parallel()),
+//                4
+//            )
+//            .subscribe(v -> {
+//
+//                assertThat(this.restTemplate.getForObject(
+//                    "http://localhost:" + testPort + v, String.class)
+//                ).contains("success");
+//
+//                latch.countDown();
+//
+//            }, 100);
+//
+//        long stopTime = System.currentTimeMillis() - startTime;
+//
+//        /* Synchronous await timeout in main thread to keep test app alive */
+//        latch.await();
+//
+//        System.err.println(reqCount.get() + " requests completed after " + (int) (stopTime) + "ms");
+//    }
 }
