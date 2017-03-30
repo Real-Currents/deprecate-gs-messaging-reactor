@@ -32,7 +32,6 @@ import javax.annotation.PostConstruct;
  */
 @Component
 @RestController
-@RequestMapping("/")
 public class QuotePublishController {
 
     @Autowired
