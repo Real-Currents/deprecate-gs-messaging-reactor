@@ -1,6 +1,7 @@
 package messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -22,6 +23,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SynchronousSink;
@@ -61,20 +63,24 @@ public class SpringAppTest {
 
     @Test
     public void testQuotePublisherMockMVC() throws Exception {
-        this.mockMvc
+        MvcResult mvcPromise = this.mockMvc
             .perform(get("/1"))
             .andDo(print())
+            .andReturn();
+
+        mockMvc
+            .perform(asyncDispatch(mvcPromise))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result.value").exists());
-            //.andExpect(jsonPath("$.result.quote").exists());
+            .andExpect(jsonPath("$.*.value").exists());
+            //.andExpect(jsonPath("$.*.quote").exists());
     }
 
-//    @Test
-//    public void testQuotePublisherResponse () throws Exception {
-//        assertThat(this.restTemplate.getForObject(
-//                "http://localhost:"+ testPort +"/", String.class)
-//        ).contains("success");
-//    }
+    @Test
+    public void testQuotePublisherResponse () throws Exception {
+        assertThat(this.restTemplate.getForObject(
+                "http://localhost:"+ testPort +"/", String.class)
+        ).contains("value");
+    }
 
 //    @Test
 //    public void testAsyncQuotePublisherResponses() throws Exception {
@@ -101,7 +107,7 @@ public class SpringAppTest {
 //
 //                assertThat(this.restTemplate.getForObject(
 //                    "http://localhost:" + testPort + v, String.class)
-//                ).contains("success");
+//                ).contains("value");
 //
 //                latch.countDown();
 //
