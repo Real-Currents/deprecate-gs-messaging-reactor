@@ -24,8 +24,6 @@ import javax.annotation.PreDestroy;
 //@ComponentScan
 public class SpringApp {
 
-    private static final int DEFAULT_NUMBER_OF_QUOTES = 10;
-
     @Autowired
     private Vertx vertx;
 
