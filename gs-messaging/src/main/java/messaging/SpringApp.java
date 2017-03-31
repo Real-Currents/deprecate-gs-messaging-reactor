@@ -2,8 +2,10 @@ package messaging;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Verticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.Vertx;
+import io.vertx.core.spi.VerticleFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -28,7 +30,24 @@ public class SpringApp {
     private Vertx vertx;
 
     @Bean
-    public Vertx getVertx () { return Vertx.vertx(); }
+    public Vertx getVertx () {
+
+        Vertx vertx = Vertx.vertx();
+
+//        vertx.registerVerticleFactory(new VerticleFactory() {
+//            @Override
+//            public String prefix() {
+//                return "";
+//            }
+//
+//            @Override
+//            public Verticle createVerticle(String s, ClassLoader classLoader) throws Exception {
+//                return new QuoteVerticle();
+//            }
+//        });
+
+        return vertx;
+    }
 
     @Autowired
     private EventBus eventBus;
@@ -40,8 +59,12 @@ public class SpringApp {
     private QuoteVerticle quoteVerticle;
 
     @PostConstruct
-    public void startVeritcle () {
-        DeploymentOptions options = new DeploymentOptions().setWorker(true);
+    public void startVerticle () {
+        DeploymentOptions options = new DeploymentOptions();
+
+//        options //.setInstances(4);
+//            .setWorker(true)
+//            .setWorkerPoolSize(4);
 
         vertx.deployVerticle(quoteVerticle, options, evt -> {
             System.err.println(evt.result());

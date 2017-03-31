@@ -99,11 +99,11 @@ public class QuoteVerticle extends AbstractVerticle {
 
                 postgresClient.close();
 
-//                try {
-//                    Thread.sleep(3000);
-//                } catch (InterruptedException e) {
-//                    System.err.println(e.getMessage());
-//                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    System.err.println(e.getMessage());
+                }
             });
 
         });
