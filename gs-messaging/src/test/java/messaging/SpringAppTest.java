@@ -20,10 +20,15 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.util.concurrent.ListenableFutureCallback;
+import org.springframework.web.client.AsyncRestTemplate;
+import org.springframework.web.client.RestTemplate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SynchronousSink;
@@ -31,6 +36,8 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -68,6 +75,10 @@ public class SpringAppTest {
             .andDo(print())
             .andReturn();
 
+        /* Testing an asynchronous rest controller with
+         * MockMvc requires that the request/response cycle
+         * be split into two method calls
+         */
         mockMvc
             .perform(asyncDispatch(mvcPromise))
             .andExpect(status().isOk())
@@ -77,47 +88,83 @@ public class SpringAppTest {
 
     @Test
     public void testQuotePublisherResponse () throws Exception {
-        assertThat(this.restTemplate.getForObject(
-                "http://localhost:"+ testPort +"/", String.class)
-        ).contains("value");
+        AsyncRestTemplate asyncRestTemplate = new AsyncRestTemplate();
+        ListenableFuture<ResponseEntity<String>> asyncResponse;
+
+        asyncResponse = asyncRestTemplate.getForEntity("http://localhost:"+ testPort +"/", String.class);
+        asyncResponse.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
+
+            /* Testing an asynchronous rest controller with
+             * AsyncRestTemplate requires that the assetion
+             * be placed into the onSuccess callback of a
+             * ListenableFuture<ResponseEntity<T>>
+             */
+            @Override
+            public void onSuccess(ResponseEntity<String> stringResponseEntity) {
+                assertThat(stringResponseEntity.getBody()).contains("value");
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                assertThat(asyncResponse.isCancelled());
+            }
+        });
     }
 
-//    @Test
-//    public void testAsyncQuotePublisherResponses() throws Exception {
-//        AtomicInteger reqCount = new AtomicInteger(0);
-//        CountDownLatch latch = new CountDownLatch(100);
-//
-//        long startTime = System.currentTimeMillis();
-//
-//        //Stream<String> testRequests = Stream.generate(() -> "/").limit(100);
-//        Flux<String> testRequests = Flux.generate(v -> v.next("/"));
-//
-//        /* Asynchronouse requests made in background thread(s) */
-//        testRequests
-//            .log()
-//            .doOnNext(v -> System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + v))
-////            .filter(v -> {
-////                if (Integer.getInteger(v) < 101) return true; else return false;
-////            })
-//            .flatMap(
-//                v -> Mono.just(v).subscribeOn(Schedulers.parallel()),
-//                4
-//            )
-//            .subscribe(v -> {
-//
-//                assertThat(this.restTemplate.getForObject(
-//                    "http://localhost:" + testPort + v, String.class)
-//                ).contains("value");
-//
-//                latch.countDown();
-//
-//            }, 100);
-//
-//        long stopTime = System.currentTimeMillis() - startTime;
-//
-//        /* Synchronous await timeout in main thread to keep test app alive */
-//        latch.await();
-//
-//        System.err.println(reqCount.get() + " requests completed after " + (int) (stopTime) + "ms");
-//    }
+    @Test
+    public void testAsyncQuotePublisherResponses() throws Exception {
+        final int targetReqCount = 100;
+        final long startTime = System.currentTimeMillis();
+
+        AtomicInteger reqCount = new AtomicInteger(0);
+        CountDownLatch latch = new CountDownLatch(targetReqCount);
+
+        //Stream<String> testRequests = Stream.generate(() -> "/").limit(100);
+        Flux<Integer> testRequests = Flux.range(1, targetReqCount);
+
+        /* Asynchronouse requests made in background thread(s) */
+        testRequests
+            .log()
+            .doOnNext(v -> System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + "/"))
+            .flatMap(
+                v -> Mono.just(v).subscribeOn(Schedulers.parallel()),
+                4
+            )
+            .subscribe(v -> {
+
+                AsyncRestTemplate asyncRestTemplate = new AsyncRestTemplate();
+                ListenableFuture<ResponseEntity<String>> asyncResponse;
+
+                asyncResponse = asyncRestTemplate.getForEntity("http://localhost:"+ testPort + "/", String.class);
+                asyncResponse.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
+
+                    /* Testing an asynchronous rest controller with
+                     * AsyncRestTemplate requires that the assetion
+                     * be placed into the onSuccess callback of a
+                     * ListenableFuture<ResponseEntity<T>>
+                     */
+                    @Override
+                    public void onSuccess(ResponseEntity<String> stringResponseEntity) {
+                        assertThat(stringResponseEntity.getBody()).contains("value");
+
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        assertThat(asyncResponse.isCancelled());
+
+                        latch.countDown();
+                    }
+                });
+
+            });
+
+        final long stopTime = System.currentTimeMillis() - startTime;
+
+        /* Synchronous await timeout in main thread to keep test app alive */
+        latch.await();
+
+        System.err.println(reqCount.get() + " requests made in " + (int) (stopTime) + "ms");
+    }
 }
