@@ -60,9 +60,6 @@ public class SpringAppTest {
     @Autowired
     private QuotePublishController quotePublishController;
 
-    @Autowired
-    private TestRestTemplate restTemplate;
-
     @Test
     public void testControllerLoads() throws Exception {
         assertThat(quotePublishController).isNotNull();
@@ -79,11 +76,11 @@ public class SpringAppTest {
          * MockMvc requires that the request/response cycle
          * be split into two method calls
          */
-        mockMvc
+        this.mockMvc
             .perform(asyncDispatch(mvcPromise))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.*.value").exists());
-            //.andExpect(jsonPath("$.*.quote").exists());
+            //.andExpect(jsonPath("$.result").exists());
+            .andExpect(jsonPath("$.*.quote").exists());
     }
 
     @Test
@@ -91,7 +88,7 @@ public class SpringAppTest {
         AsyncRestTemplate asyncRestTemplate = new AsyncRestTemplate();
         ListenableFuture<ResponseEntity<String>> asyncResponse;
 
-        asyncResponse = asyncRestTemplate.getForEntity("http://localhost:"+ testPort +"/", String.class);
+        asyncResponse = asyncRestTemplate.getForEntity("http://localhost:"+ this.testPort +"/", String.class);
         asyncResponse.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
 
             /* Testing an asynchronous rest controller with
@@ -101,7 +98,7 @@ public class SpringAppTest {
              */
             @Override
             public void onSuccess(ResponseEntity<String> stringResponseEntity) {
-                assertThat(stringResponseEntity.getBody()).contains("value");
+                assertThat(stringResponseEntity.getBody()).contains("result");
             }
 
             @Override
@@ -125,7 +122,7 @@ public class SpringAppTest {
         /* Asynchronouse requests made in background thread(s) */
         testRequests
             .log()
-            .doOnNext(v -> System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + testPort + "/"))
+            .doOnNext(v -> System.err.println(reqCount.incrementAndGet() + ") Get response for http://localhost:" + this.testPort + "/"))
             .flatMap(
                 v -> Mono.just(v).subscribeOn(Schedulers.parallel()),
                 4
@@ -135,7 +132,7 @@ public class SpringAppTest {
                 AsyncRestTemplate asyncRestTemplate = new AsyncRestTemplate();
                 ListenableFuture<ResponseEntity<String>> asyncResponse;
 
-                asyncResponse = asyncRestTemplate.getForEntity("http://localhost:"+ testPort + "/", String.class);
+                asyncResponse = asyncRestTemplate.getForEntity("http://localhost:"+ this.testPort + "/", String.class);
                 asyncResponse.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
 
                     /* Testing an asynchronous rest controller with
@@ -145,16 +142,16 @@ public class SpringAppTest {
                      */
                     @Override
                     public void onSuccess(ResponseEntity<String> stringResponseEntity) {
-                        assertThat(stringResponseEntity.getBody()).contains("value");
-
                         latch.countDown();
+
+                        assertThat(stringResponseEntity.getBody()).contains("result");
                     }
 
                     @Override
                     public void onFailure(Throwable throwable) {
-                        assertThat(asyncResponse.isCancelled());
-
                         latch.countDown();
+
+                        assertThat(asyncResponse.isCancelled());
                     }
                 });
 

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.vertx.core.json.JsonArray;
 
 /**
- * Created by revlin on 2/25/17.
+ * Created by John H on 2/25/17.
  */
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class Quote {

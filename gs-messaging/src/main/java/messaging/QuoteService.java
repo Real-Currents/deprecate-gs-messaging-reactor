@@ -1,7 +1,7 @@
 package messaging;
 
 /**
- * Created by revlin on 3/6/17.
+ * Created by John H on 3/6/17.
  */
 
 import io.vertx.core.eventbus.EventBus;

@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 /**
- * Created by revlin on 3/26/17.
+ * Created by John H on 3/26/17.
  */
 @Service
 public class QuoteVerticle extends AbstractVerticle {
@@ -99,11 +99,11 @@ public class QuoteVerticle extends AbstractVerticle {
 
                 postgresClient.close();
 
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    System.err.println(e.getMessage());
-                }
+//                try {
+//                    Thread.sleep(3000);
+//                } catch (InterruptedException e) {
+//                    System.err.println(e.getMessage());
+//                }
             });
 
         });

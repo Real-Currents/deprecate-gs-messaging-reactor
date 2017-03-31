@@ -14,7 +14,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 /**
- * Created by revlin on 2/25/17.
+ * Created by John H on 2/25/17.
  */
 @SpringBootApplication
 //@Configuration
